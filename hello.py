@@ -1,13 +1,14 @@
 import os
+import uuid
 
-from flask import Flask, render_template, url_for, redirect, request, flash
+from flask import Flask, render_template, url_for, redirect, request, flash, make_response
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
     # import pdb; pdb.set_trace()
-    return '<a href="/login">Login</a>'
+    return ''
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -15,10 +16,18 @@ def login():
     if request.method == 'POST':
         if valid_login(request.form['username'], request.form['password']):
             flash("Successfully logged in")
-            return redirect(url_for('home', username=request.form.get('username')))
+            response = make_response(redirect(url_for('home', username=request.form.get('username'))))
+            response.set_cookie('username', str(uuid.uuid4()))
+            return response
         else:
             error = 'Invalid username and password combination'
     return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    response = make_response(redirect(url_for('login')))
+    response.set_cookie('username', '', expires=0)
+    return response
 
 @app.route('/home/<username>')
 def home(username=None):
