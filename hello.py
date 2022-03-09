@@ -1,6 +1,7 @@
 import os
 import uuid
 import logging
+import pymysql
 
 from flask import (
     Flask,
@@ -15,6 +16,14 @@ from flask import (
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
+
+# DB Connection
+conn = pymysql.connect(
+    host=os.getenv("DBHOST"),
+    user=os.getenv("DBUSER"),
+    passwd=os.getenv("DBPASSWORD"),
+    db=os.getenv("DBNAME"),
+)
 
 
 @app.route("/")
@@ -54,10 +63,13 @@ def home(username=None):
 
 
 def valid_login(username, password):
-    if password == "1234":
-        return True
-
-    return False
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM user WHERE username='%s' AND password='%s'"
+        % (username, password)
+    )
+    data = cursor.fetchone()
+    return bool(data)
 
 
 if __name__ == "__main__":
